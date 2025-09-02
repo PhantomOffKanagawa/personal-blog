@@ -45,22 +45,41 @@ const { title, description, image = FallbackImage } = Astro.props;
 		} catch {}
 	})();
 
-	document.addEventListener('DOMContentLoaded', () => {
-    // Get the current path from the browser's URL
-    const pathname = window.location.pathname;
+// Function to fix a single URL
+function fixUrl(url) {
+  // Check if the URL is an internal, absolute path
+  if (url.startsWith('/') && !url.startsWith('//')) {
+    // Get the base path from the current URL
+    const basePath = window.location.pathname.split('/')[1];
 
-    // Split the path into segments and find your base path
-    // e.g., for /personal-blog/reviews/, this finds "personal-blog"
-    const pathSegments = pathname.split('/').filter(Boolean);
-    const basePath = pathSegments.length > 0 ? `/${pathSegments[0]}/` : '/';
+    // Check if the link already includes the base path
+    if (url.startsWith(`/${basePath}/`)) {
+      return url; // Already correct
+    }
 
-    // Create a new <base> tag
-    const baseTag = document.createElement('base');
-    baseTag.href = `${window.location.protocol}//${window.location.host}${basePath}`;
+    // Prepend the base path
+    return `/${basePath}${url}`;
+  }
+  return url; // Return as is for external or relative links
+}
 
-    // Add the <base> tag to the head of the document
-    document.head.prepend(baseTag);
-});
+// Function to fix all links on the page
+function fixAllLinks() {
+  const links = document.querySelectorAll('a[href]');
+  links.forEach(link => {
+    link.href = fixUrl(link.getAttribute('href'));
+  });
+
+  const fontLinks = document.querySelectorAll('link[href]');
+  fontLinks.forEach(link => {
+    if (link.href.includes('/fonts/')) {
+      link.href = fixUrl(link.getAttribute('href'));
+    }
+  });
+}
+
+// Run the function when the page loads
+document.addEventListener('DOMContentLoaded', fixAllLinks);
 	</script>
 
 <!-- Font preloads -->
