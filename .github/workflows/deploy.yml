@@ -1,18 +1,17 @@
-# This workflow will run on every push to the main branch
+# This workflow is for Astro, not Jekyll
 name: Deploy Astro site to GitHub Pages
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to push the static files to the gh-pages branch
-    
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,5 +33,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          publish_branch: gh-pages # The branch to which the static files are pushed
-          destination_dir: ./ # The directory within the gh-pages branch
+          publish_branch: gh-pages
