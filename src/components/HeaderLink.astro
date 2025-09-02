@@ -7,14 +7,9 @@ const { href, class: className, ...props } = Astro.props;
 const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL, '');
 const subpath = pathname.match(/[^\/]+/g);
 const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
-
-// Build final href with BASE_URL for relative paths
-const finalHref = typeof href === 'string' && href.startsWith('/')
-	? import.meta.env.BASE_URL.replace(/\/$/, '') + href
-	: href;
 ---
 
-<a href={finalHref} class:list={[className, { active: isActive }]} {...props}>
+<a href={href} class:list={[className, { active: isActive }]} {...props}>
 	<slot />
 </a>
 <style>
