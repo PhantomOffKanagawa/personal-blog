@@ -11,7 +11,9 @@ import remarkIconify from './src/remark/remark-iconify.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://phantomoffkanagawa.github.io/personal-blog/',
+  site: 'https://phantomoffkanagawa.github.io',
+  base: '/personal-blog/',
+  trailingSlash: 'always',
   integrations: [mdx(), sitemap(), icon()],
 
   vite: {
