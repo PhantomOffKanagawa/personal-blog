@@ -36,7 +36,7 @@ const titleMap: Record<Params['type'], string> = { run: 'Runs', workout: 'Workou
       <ul id="list" class="mt-4 space-y-2">
         {items.map(i => (
           <li>
-            <a class="block surface p-3 rounded-md card-hover" href={`/tracking/${i.id}/`}>
+            <a class="block surface p-3 rounded-md card-hover" href={`${import.meta.env.BASE_URL}tracking/${i.id}/`}>
               <div class="text-sm text-[var(--muted)]">{new Date(i.data.date).toLocaleDateString()}</div>
               <div>
                 {i.data.type} {i.data.distanceKm && <span>— {i.data.distanceKm} km</span>}

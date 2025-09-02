@@ -61,12 +61,12 @@ const categories: { key: string; title: string; filter: (r: any) => boolean }[] 
           <section>
             <div class="flex items-center justify-between mt-8 mb-2">
               <h2>{cat.title}</h2>
-              <a class="text-sm" href={`/reviews/${cat.key}`}>View all →</a>
+              <a class="text-sm" href={`${import.meta.env.BASE_URL}reviews/${cat.key}`}>View all →</a>
             </div>
             <ul>
               {items.map((post: any) => (
                 <li>
-                  <a href={`/reviews/${post.id}/`}>
+                  <a href={`${import.meta.env.BASE_URL}reviews/${post.id}/`}>
                     {post.data.productImage && (
                       <Image width={400} height={300} src={post.data.productImage} alt="" />
                     )}
@@ -88,7 +88,7 @@ const categories: { key: string; title: string; filter: (r: any) => boolean }[] 
           <ul>
             {all.slice(0, 6).map((post: any) => (
               <li>
-                <a href={`/reviews/${post.id}/`}>
+                <a href={`${import.meta.env.BASE_URL}reviews/${post.id}/`}>
                   {post.data.productImage && (
                     <Image width={400} height={300} src={post.data.productImage} alt="" />
                   )}
