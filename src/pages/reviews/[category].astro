@@ -185,7 +185,7 @@ const stores = Array.from(new Set(items.flatMap((i:any)=> (i.data.stores ?? []) 
           const ul = document.createElement('ul'); ul.className = 'space-y-2';
           arr.forEach(i => {
             const li = document.createElement('li');
-            const a = document.createElement('a'); a.className = 'block surface p-3 rounded-md card-hover'; a .href = `/personal-blog/reviews/${i.id}/`;
+            const a = document.createElement('a'); a.className = 'block surface p-3 rounded-md card-hover'; a .href = `/reviews/${i.id}/`;
             const nm = document.createElement('div'); nm.className = 'text-lg'; nm.textContent = i.productName || '';
             const br = document.createElement('div'); br.className = 'text-[var(--muted)]'; br.textContent = i.brand || '';
             const st = document.createElement('div'); st.className = 'text-[var(--muted)]'; if (i.stores?.length) st.textContent = i.stores.join(', ');
@@ -217,7 +217,7 @@ const stores = Array.from(new Set(items.flatMap((i:any)=> (i.data.stores ?? []) 
               td(i.createdDate ? new Date(i.createdDate).toLocaleDateString() : ''),
             );
             const linkTd = document.createElement('td'); linkTd.className = 'py-2';
-            const link = document.createElement('a'); link .href = `/personal-blog/reviews/${i.id}/`; link.textContent = 'Open'; link.className = 'underline hover:text-[var(--accent)]';
+            const link = document.createElement('a'); link .href = `/reviews/${i.id}/`; link.textContent = 'Open'; link.className = 'underline hover:text-[var(--accent)]';
             linkTd.appendChild(link); tr.appendChild(linkTd);
             tbody.appendChild(tr);
           });
