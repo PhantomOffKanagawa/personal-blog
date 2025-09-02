@@ -1,0 +1,34 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('tracking');
+  return entries.map((e) => ({ params: { slug: e.id }, props: e }));
+}
+
+const entry = Astro.props as CollectionEntry<'tracking'>;
+const { Content } = await render(entry);
+---
+<html lang="en">
+  <head>
+    <BaseHead title={`Tracking: ${entry.data.type}`} description={entry.data.notes || ''} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <article class="prose">
+        <h1 class="mb-2">{entry.data.type} — {new Date(entry.data.date).toLocaleDateString()}</h1>
+        <div class="text-[var(--muted)] mb-4">
+          {entry.data.distanceKm && <span>{entry.data.distanceKm} km</span>}
+          {entry.data.durationMin && <span class="ml-3">{entry.data.durationMin}</span>}
+          {entry.data.calories && <span class="ml-3">{entry.data.calories} kcal</span>}
+        </div>
+        <Content />
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>

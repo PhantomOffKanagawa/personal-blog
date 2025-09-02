@@ -1,0 +1,159 @@
+---
+import BaseHead from '../../../components/BaseHead.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+import { parseDurationToMinutes, formatMinSec as fmtMinSecUtil, formatHMS as fmtHMSUtil } from '../../../utils/time';
+
+const MARATHON_KM = 42.195;
+
+const fmtMinSec = fmtMinSecUtil;
+const fmtHMS = fmtHMSUtil;
+
+const all = await getCollection('tracking');
+const runs = all
+  .filter((e) => e.data.type === 'run')
+  .sort((a, b) => +new Date(a.data.date) - +new Date(b.data.date));
+type SeriesPoint = { id: string; date: Date; distanceKm: number; durationMin: number; pace: number };
+function toPoint(e: typeof runs[number]): Partial<SeriesPoint> & { id: string; date: Date } {
+    const distanceKm = typeof e.data.distanceKm === 'number' ? e.data.distanceKm : undefined;
+    const durationMinParsed = parseDurationToMinutes(e.data.durationMin);
+    const base = { id: e.id, date: new Date(e.data.date) } as const;
+    if (typeof distanceKm === 'number' && typeof durationMinParsed === 'number' && distanceKm > 0) {
+      return { ...base, distanceKm, durationMin: durationMinParsed, pace: durationMinParsed / distanceKm };
+    }
+    return base as any;
+}
+const series: SeriesPoint[] = runs
+  .map(toPoint)
+  .filter((e: any): e is SeriesPoint => typeof e.distanceKm === 'number' && typeof e.durationMin === 'number' && typeof e.pace === 'number' && e.distanceKm > 0);
+const latest = series.at(-1);
+const targetPace = 360 / MARATHON_KM; // 6h target in min/km
+const predicted = latest ? latest.pace * MARATHON_KM : undefined; // minutes
+const delta = typeof predicted === 'number' ? predicted - 360 : undefined;
+
+// Chart
+const W = 700, H = 200, PAD = 24;
+const minP = series.length ? Math.min(...series.map(s => s.pace)) : 0;
+let maxP = series.length ? Math.max(...series.map(s => s.pace)) : 0;
+let minPace = minP, maxPace = maxP;
+if (minPace === maxPace) { minPace = Math.max(0, minPace - 1); maxPace = minPace + 2; }
+const usableW = W - PAD * 2; const usableH = H - PAD * 2;
+const x = (i: number) => PAD + (series.length > 1 ? (i * (usableW / (series.length - 1))) : usableW/2);
+const y = (pace: number) => {
+  const clamped = Math.min(maxPace, Math.max(minPace, pace));
+  const t = (maxPace - clamped) / (maxPace - minPace || 1);
+  return PAD + t * usableH;
+};
+const pts = series.map((s, i) => [x(i), y(s.pace)] as const);
+const d = pts.length ? `M ${pts[0][0]} ${pts[0][1]} ` + pts.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(' ') : '';
+const yTarget = y(targetPace);
+---
+<html lang="en">
+  <head>
+    <BaseHead title="Tracking: Runs" description="Latest run insights and pace trend." />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>Runs</h1>
+
+      {latest ? (
+        <section class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="surface p-4 rounded-xl">
+            <h2 class="mb-2">Latest run</h2>
+            <div class="text-sm text-[var(--muted)]">{latest.date.toLocaleDateString()}</div>
+            <div class="mt-2 grid grid-cols-2 gap-3">
+              <div>
+                <div class="text-[var(--muted)] text-sm">Distance</div>
+                <div class="text-xl">{latest.distanceKm} km</div>
+              </div>
+              <div>
+                <div class="text-[var(--muted)] text-sm">Duration</div>
+                <div class="text-xl">{fmtHMS(latest.durationMin)}</div>
+              </div>
+              <div>
+                <div class="text-[var(--muted)] text-sm">Pace</div>
+                <div class="text-xl">{fmtMinSec(latest.pace)}/km</div>
+              </div>
+              <div>
+                <div class="text-[var(--muted)] text-sm">Target pace (6h)</div>
+                <div class="text-xl">{fmtMinSec(targetPace)}/km</div>
+              </div>
+            </div>
+            {typeof predicted === 'number' && (
+              <div class="mt-3">
+                <div class="text-[var(--muted)] text-sm">Predicted marathon</div>
+                <div class="text-xl">{fmtHMS(predicted)}</div>
+                <div class="mt-1 text-sm">
+                  {delta! < 0 ? (
+                    <span class="text-green-400">Ahead by {fmtHMS(Math.abs(delta!))}</span>
+                  ) : delta! > 0 ? (
+                    <span class="text-red-400">Behind by {fmtHMS(delta!)}</span>
+                  ) : (
+                    <span class="text-[var(--muted)]">Right on 6:00:00</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div class="surface p-4 rounded-xl">
+            <h2 class="mb-2">Pace trend</h2>
+            {series.length ? (
+              <div class="w-full overflow-x-auto">
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="200" role="img" aria-label="Pace trend line chart">
+                  <defs>
+                    <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.6" />
+                      <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.1" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="100%" height="100%" fill="none" />
+                  <g>
+                    <line x1="0" x2="100%" y1={yTarget} y2={yTarget} stroke="var(--border)" stroke-dasharray="4 4" />
+                    <text x={W - 6} y={yTarget - 6} text-anchor="end" font-size="10" fill="var(--muted)">Target</text>
+                  </g>
+                  {d && <path d={d} fill="none" stroke="var(--accent)" stroke-width="2" />}
+                  {pts.map(([px, py]) => (
+                    <circle cx={px} cy={py} r="3" fill="var(--accent)" />
+                  ))}
+                  <g>
+                    <text x="6" y="12" font-size="10" fill="var(--muted)">Fast: {fmtMinSec(minPace)} /km</text>
+                    <text x="6" y={H - 6} font-size="10" fill="var(--muted)">Slow: {fmtMinSec(maxPace)} /km</text>
+                  </g>
+                </svg>
+              </div>
+            ) : (
+              <div class="text-[var(--muted)]">No paced runs yet.</div>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section class="surface p-4 rounded-xl mt-4">No runs found.</section>
+      )}
+
+      {runs.length ? (
+        <section class="mt-6">
+          <h2>All runs</h2>
+          <ul class="mt-2 space-y-2">
+      {[...runs].reverse().map(r => (
+              <li>
+                <a class="block surface p-3 rounded-md card-hover" href={`/tracking/${r.id}/`}>
+                  <div class="text-sm text-[var(--muted)]">{new Date(r.data.date).toLocaleDateString()}</div>
+                  <div>
+                    {r.data.distanceKm ? `${r.data.distanceKm} km` : ''}
+        {r.data.durationMin ? ` · ${(() => { const m = parseDurationToMinutes(r.data.durationMin); return typeof m==='number' ? fmtHMS(m) : String(r.data.durationMin); })()}` : ''}
+        {(r.data.distanceKm && r.data.durationMin) ? ` · ${(() => { const m = parseDurationToMinutes(r.data.durationMin); return (typeof m==='number' && r.data.distanceKm) ? fmtMinSec(m / (r.data.distanceKm as number)) : ''; })()}/km` : ''}
+                  </div>
+                  {r.data.notes && <div class="text-[var(--muted)]">{r.data.notes}</div>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </main>
+    <Footer />
+  </body>
+</html>

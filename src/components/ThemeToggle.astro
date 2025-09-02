@@ -1,0 +1,25 @@
+---
+/* A simple theme toggle that flips :root[data-theme] between dark (default) and light. */
+const id = 'theme-toggle';
+---
+<button id={id} class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)] text-[var(--text)] hover:border-[color:rgba(65,221,169,.35)] card-hover" aria-label="Toggle color theme" title="Toggle theme">
+  <slot>
+    <span class="icon">🌙</span>
+    <span class="text-sm">Theme</span>
+  </slot>
+  <script type="module">
+    const btn = document.currentScript?.parentElement;
+    if (btn) {
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)');
+      const stored = localStorage.getItem('theme');
+      if (stored) document.documentElement.setAttribute('data-theme', stored);
+      else if (prefersLight.matches) document.documentElement.setAttribute('data-theme', 'light');
+      btn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', current);
+        localStorage.setItem('theme', current);
+        btn.setAttribute('data-theme', current);
+      });
+    }
+  </script>
+</button>

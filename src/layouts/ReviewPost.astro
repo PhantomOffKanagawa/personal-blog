@@ -5,10 +5,12 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import ReadingProgress from '../components/ReadingProgress.astro';
 
 type Props = CollectionEntry<'reviews'>['data'];
 
-const { productName, brand, pubDate, rating, productImage, tags } = Astro.props;
+const { productName, brand, createdDate, ratingOverall = 0, productImage, tags, allergenInfo, price, stores } = Astro.props as Props;
 ---
 
 <html lang="en">
@@ -27,14 +29,11 @@ const { productName, brand, pubDate, rating, productImage, tags } = Astro.props;
 				display: block;
 				margin: 0 auto;
 				border-radius: 12px;
-				box-shadow: var(--box-shadow);
+				box-shadow: var(--shadow);
 			}
 			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
+				width: 720px; max-width: calc(100% - 2em);
+				margin: auto; padding: 1em; color: var(--text);
 			}
 			.title {
 				margin-bottom: 1em;
@@ -47,7 +46,7 @@ const { productName, brand, pubDate, rating, productImage, tags } = Astro.props;
 			}
 			.date {
 				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
+				color: var(--muted);
 			}
 			.last-updated-on {
 				font-style: italic;
@@ -56,21 +55,52 @@ const { productName, brand, pubDate, rating, productImage, tags } = Astro.props;
 	</head>
 
 	<body>
+		<ReadingProgress />
 		<Header />
 		<main>
 			<article>
+				<div class="max-w-[960px] mx-auto px-4"><Breadcrumbs /></div>
 				<div class="hero-image">
 					{productImage && <Image width={1020} height={510} src={productImage} alt="" />}
 				</div>
 				<div class="prose">
 					<div class="title">
 						<div class="date">
-							<FormattedDate date={pubDate} />
+							<FormattedDate date={createdDate} />
 						</div>
 						<h1>{productName}</h1>
 						<hr />
 					</div>
-					<slot />
+					<div class="grid grid-cols-1 gap-6 items-start">
+						<div>
+							<div class="surface p-3 rounded-md mb-4 text-sm">
+								<div class="flex flex-wrap gap-2 items-center">
+									<span class="text-[var(--muted)]">Brand:</span><strong>{brand}</strong>
+									<span class="ml-3 text-[var(--muted)]">Rating:</span>
+									<span>
+										{Array.from({ length: 5 }).map((_, i) => {
+											if (ratingOverall >= i + 1) return '★';
+											if (ratingOverall > i && ratingOverall < i + 1) return '⯪'; // Unicode half star
+											return '☆';
+										})}
+									</span>
+									{price && <><span class="ml-3 text-[var(--muted)]">Price:</span><span>${price.toFixed(2)}</span></>}
+									{stores && stores.length && <><span class="ml-3 text-[var(--muted)]">Stores:</span><span>{stores.join(', ')}</span></>}
+								</div>
+								{tags && tags.length && (
+									<div class="mt-2 flex flex-wrap gap-2">
+										{tags.map(t => <span class="px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--muted)]">{t}</span>)}
+									</div>
+								)}
+								{allergenInfo && allergenInfo.length && (
+									<div class="mt-2 flex flex-wrap gap-2">
+										{allergenInfo.map(t => <span class="px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--muted)]">{t}</span>)}
+									</div>
+								)}
+							</div>
+							<slot />
+						</div>
+					</div>
 				</div>
 			</article>
 		</main>

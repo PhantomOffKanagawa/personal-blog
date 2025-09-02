@@ -1,0 +1,80 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+import { isClockString } from '../../utils/time';
+
+interface Params { type: 'run'|'workout'|'eating'|'sleep'|'misc' }
+export async function getStaticPaths() {
+  // Build pages for each tracking type that exists (fallback to common types)
+  try {
+    const all = await getCollection('tracking');
+    const types = Array.from(new Set(all.map((e) => e.data.type)));
+    const list = (types.length ? types : ['run', 'workout', 'eating', 'sleep', 'misc']).filter((t) => t !== 'run');
+    return list.map((type) => ({ params: { type } }));
+  } catch {
+    // If collection missing at build time, still generate common routes
+    const list = ['run', 'workout', 'eating', 'sleep', 'misc'].filter((t) => t !== 'run');
+    return list.map((type) => ({ params: { type } }));
+  }
+}
+const type = (Astro.params.type || 'misc') as Params['type'];
+const all = await getCollection('tracking');
+const items = all.filter(e => e.data.type === type).sort((a,b)=> +new Date(b.data.date) - +new Date(a.data.date));
+const titleMap: Record<Params['type'], string> = { run: 'Runs', workout: 'Workouts', eating: 'Eating', sleep: 'Sleep', misc: 'Misc' };
+---
+<html lang="en">
+  <head>
+    <BaseHead title={`Tracking: ${titleMap[type] || type}`} description={`All ${titleMap[type] || type.toString().toLowerCase()}.`} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>{titleMap[type] || type}</h1>
+      <div class="mt-3 max-w-md"><input id="q" class="w-full rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-3 py-2" placeholder="Search {titleMap[type]}" /></div>
+      <ul id="list" class="mt-4 space-y-2">
+        {items.map(i => (
+          <li>
+            <a class="block surface p-3 rounded-md card-hover" href={`/tracking/${i.id}/`}>
+              <div class="text-sm text-[var(--muted)]">{new Date(i.data.date).toLocaleDateString()}</div>
+              <div>
+                {i.data.type} {i.data.distanceKm && <span>— {i.data.distanceKm} km</span>}
+                {i.data.durationMin && <span class="ml-2">{isClockString(i.data.durationMin) ? i.data.durationMin : `${i.data.durationMin} min`}</span>}
+              </div>
+              {i.data.notes && <div class="text-[var(--muted)]">{i.data.notes}</div>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </main>
+    <Footer />
+    <script type="module">
+      import Fuse from 'fuse.js';
+      const data = {items: JSON.parse(document.getElementById('data')?.textContent || '[]')};
+      const fuse = new Fuse(data.items, { keys: ['date','notes','type'], threshold: .4, ignoreLocation: true });
+      const input = document.getElementById('q');
+      const list = document.getElementById('list');
+      const render = (arr) => {
+        list.innerHTML = '';
+        arr.forEach((i) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a class="block surface p-3 rounded-md card-hover" href="/tracking/${i.id}/">
+                            <div class=\"text-sm text-[var(--muted)]\">${new Date(i.date).toLocaleDateString()}</div>
+                            <div>${i.type}${i.distanceKm?` — ${i.distanceKm} km`:''}${i.durationMin?` <span class='ml-2'>${typeof i.durationMin==='string' && i.durationMin.includes(':') ? i.durationMin : i.durationMin + ' min'}</span>`:''}</div>
+                            ${i.notes?`<div class=\"text-[var(--muted)]\">${i.notes}</div>`:''}
+                          </a>`;
+          list.appendChild(li);
+        });
+      };
+      render(data.items);
+      let t; input?.addEventListener('input', ()=>{ clearTimeout(t); t=setTimeout(()=>{
+        const q = input.value.trim();
+        if (!q) return render(data.items);
+        const res = fuse.search(q).map(r=>r.item);
+        render(res);
+      }, 120); });
+    </script>
+    <script type="application/json" id="data">{JSON.stringify(items.map(i => ({ id: i.id, date: i.data.date, type: i.data.type, notes: i.data.notes, distanceKm: i.data.distanceKm, durationMin: i.data.durationMin })) )}</script>
+  </body>
+</html>

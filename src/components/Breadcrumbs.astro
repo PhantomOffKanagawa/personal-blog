@@ -1,0 +1,27 @@
+---
+interface Crumb { href: string; label: string }
+const parts = Astro.url.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+const crumbs: Crumb[] = [{ href: '/', label: 'Home' }];
+let acc = '';
+for (const p of parts) {
+  acc += '/' + p;
+  crumbs.push({ href: acc + '/', label: decodeURIComponent(p).replaceAll('-', ' ') });
+}
+---
+<nav aria-label="Breadcrumb" class="breadcrumbs">
+  <ol class="flex flex-wrap items-center gap-1">
+    {crumbs.map((c, i) => (
+      <li>
+        {i < crumbs.length - 1 ? (
+          <a href={c.href} class="hover:underline">{c.label}</a>
+        ) : (
+          <span aria-current="page" class="text-[var(--text)]">{c.label}</span>
+        )}
+        {i < crumbs.length - 1 && <span class="mx-1 text-[var(--muted)]">/</span>}
+      </li>
+    ))}
+  </ol>
+  <style>
+    .breadcrumbs { margin: .5rem 0 1rem; }
+  </style>
+</nav>

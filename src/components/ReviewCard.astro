@@ -7,15 +7,21 @@ interface Props {
 }
 
 const { review } = Astro.props;
-const { productName, brand, rating, productImage } = review.data;
+const { productName, brand, ratingOverall = 0, productImage } = review.data;
 ---
-<a href={`/reviews/${review.id}`} class="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:scale-105 transition-transform">
+<a href={`/reviews/${review.id}`} class="surface rounded-lg overflow-hidden card-hover block">
     {review.data.productImage && (
         <Image width={720} height={360} src={review.data.productImage} alt={productName} />
     )}
   <div class="p-4">
     <h3 class="text-lg font-bold">{productName}</h3>
-    <p class="text-sm text-gray-400 mb-2">{brand}</p>
-    <p class="text-lg">{'★'.repeat(rating)}{'☆'.repeat(5 - rating)}</p>
+    <p class="text-sm text-[var(--muted)] mb-2">{brand}</p>
+    <span>
+      {Array.from({ length: 5 }).map((_, i) => {
+        if (ratingOverall >= i + 1) return '★';
+        if (ratingOverall > i && ratingOverall < i + 1) return '⯪'; // Unicode half star
+        return '☆';
+      })}
+    </span>
   </div>
 </a>

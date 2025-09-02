@@ -1,0 +1,14 @@
+<div class="reading-progress" id="reading-progress"></div>
+<script>
+  const bar = document.getElementById('reading-progress');
+  const calc = () => {
+    const h = document.documentElement;
+    const scrollTop = h.scrollTop || document.body.scrollTop;
+    const height = h.scrollHeight - h.clientHeight;
+    const progress = Math.max(0, Math.min(1, height ? scrollTop/height : 0));
+    if (bar) bar.style.width = `${progress*100}%`;
+  };
+  document.addEventListener('scroll', calc, { passive: true });
+  window.addEventListener('resize', calc);
+  calc();
+</script>

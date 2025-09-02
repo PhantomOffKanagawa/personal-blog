@@ -13,12 +13,7 @@ const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
 	<slot />
 </a>
 <style>
-	a {
-		display: inline-block;
-		text-decoration: none;
-	}
-	a.active {
-		font-weight: bolder;
-		text-decoration: underline;
-	}
+	a { display: inline-block; padding: .5em .75em; color: var(--muted); border-bottom: 2px solid transparent; text-decoration: none; }
+	a:hover { color: var(--text); border-bottom-color: color-mix(in oklab, var(--accent) 35%, transparent); }
+	a.active { color: var(--text); border-bottom-color: var(--accent); }
 </style>

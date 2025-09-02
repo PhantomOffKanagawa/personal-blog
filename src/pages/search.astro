@@ -1,0 +1,120 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SearchInput from '../components/SearchInput.astro';
+import { getCollection } from 'astro:content';
+const q = Astro.url.searchParams.get('q') || '';
+const page = parseInt(Astro.url.searchParams.get('page') || '1');
+const limit = 10;
+const [blog, reviews, tracking] = await Promise.all([
+  getCollection('blog'),
+  getCollection('reviews'),
+  getCollection('tracking').catch(() => [] as any[]),
+]);
+let items = [
+  ...blog.map(b => ({ url: `/blog/${b.id}/`, title: b.data.title, type: 'blog', description: b.data.description, tags: (b.data as any).tags })),
+  ...reviews.map(r => ({ url: `/reviews/${r.id}/`, title: r.data.productName, type: 'review', description: r.data.brand, tags: r.data.tags })),
+  ...tracking.map(t => ({ url: `/tracking/${t.id}/`, title: t.data.type + ' ' + new Date(t.data.date).toLocaleDateString(), type: 'tracking', description: t.data.notes, tags: t.data.tags })),
+];
+if (q) {
+  const { default: Fuse } = await import('fuse.js');
+  const fuse = new Fuse(items, { keys: ['title','description','tags'], threshold: .4, ignoreLocation: true });
+  items = fuse.search(q).map(r => r.item);
+}
+const total = items.length;
+const pages = Math.max(1, Math.ceil(total/limit));
+const slice = items.slice((page-1)*limit, ((page-1)*limit)+limit);
+---
+---
+<html lang="en">
+  <head>
+    <BaseHead title="Search" description="Search across blog, reviews, and tracking." />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>Search</h1>
+      <div class="mt-2">
+        <SearchInput value={q} />
+      </div>
+      <section class="mt-6 surface p-4 rounded-xl">
+        <div id="results" class="space-y-3">
+          {slice.map(r => (
+            <a href={r.url} class="block p-3 rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)] card-hover">
+              <div class="text-sm uppercase tracking-wide text-[var(--muted)]">{r.type}</div>
+              <div class="text-lg">{r.title}</div>
+              {r.description && <div class="text-[var(--muted)]">{r.description}</div>}
+            </a>
+          ))}
+          {!slice.length && <div class="text-[var(--muted)]">No results.</div>}
+        </div>
+        <div id="pager" class="flex items-center justify-between mt-4">
+          <div class="flex items-center gap-2">
+            <a class:list={[ 'px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-elev-2)]', { 'pointer-events-none opacity-50': page<=1 } ]} href={`/search?q=${encodeURIComponent(q)}&page=${Math.max(1, page-1)}`}>Prev</a>
+            <span class="text-[var(--muted)]">Page {page} of {pages}</span>
+            <a class:list={[ 'px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-elev-2)]', { 'pointer-events-none opacity-50': page>=pages } ]} href={`/search?q=${encodeURIComponent(q)}&page=${Math.min(pages, page+1)}`}>Next</a>
+          </div>
+        </div>
+      </section>
+    </main>
+    <Footer />
+  <script type="module">
+      import Fuse from 'https://cdn.skypack.dev/fuse.js@6.6.2';
+      const params = new URLSearchParams(location.search);
+      let q = params.get('q') || '';
+      let page = parseInt(params.get('page') || '1');
+      const limit = 10;
+  async function load() {
+        let data;
+        try {
+          const res = await fetch(`/api/search.json?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`);
+          if (!res.ok) throw new Error('api');
+          data = await res.json();
+        } catch (e) {
+          // Fallback for static hosting: fetch a static index and search client-side
+          const idxRes = await fetch('/search-index.json');
+          const idx = await idxRes.json();
+          const fuse = new Fuse(idx.items, { keys: ['title','description','tags'], threshold: .4, ignoreLocation: true });
+          const results = q ? fuse.search(q).map(r=>r.item) : idx.items;
+          data = { total: results.length, page, limit, results: results.slice((page-1)*limit, page*limit) };
+        }
+        const root = document.getElementById('results');
+        if (root) {
+          root.innerHTML = '';
+          data.results.forEach(r => {
+            const a = document.createElement('a');
+            a.href = r.url; a.className = 'block p-3 rounded-md border border-[var(--border)] bg-[var(--bg-elev-1)] card-hover';
+            a.innerHTML = `<div class=\"text-sm uppercase tracking-wide text-[var(--muted)]\">${r.type}</div>
+                            <div class=\"text-lg\">${r.title}</div>
+                            ${r.description ? `<div class=\"text-[var(--muted)]\">${r.description}</div>` : ''}`;
+            root.appendChild(a);
+          });
+        }
+        const pager = document.getElementById('pager');
+        const pages = Math.max(1, Math.ceil(data.total / data.limit));
+        if (pager) { pager.innerHTML = ''; }
+        const prev = document.createElement('button'); prev.textContent = 'Prev'; prev.disabled = page <= 1;
+        prev.onclick = () => { page = Math.max(1, page-1); updateUrl(); load(); };
+        const next = document.createElement('button'); next.textContent = 'Next'; next.disabled = page >= pages;
+        next.onclick = () => { page = Math.min(pages, page+1); updateUrl(); load(); };
+        const info = document.createElement('div'); info.textContent = `Page ${page} of ${pages}`;
+        info.className = 'text-[var(--muted)]';
+        const wrap = document.createElement('div'); wrap.className = 'flex items-center gap-2';
+        ;[prev, info, next].forEach(el => {
+          if (el instanceof HTMLButtonElement) {
+            el.className = 'px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-elev-2)] disabled:opacity-50';
+          }
+          wrap.appendChild(el);
+        });
+        if (pager) pager.appendChild(wrap);
+      }
+      function updateUrl() {
+        const sp = new URLSearchParams(location.search);
+        sp.set('q', q); sp.set('page', String(page));
+        history.replaceState({}, '', `/search?${sp.toString()}`);
+      }
+      if (q) load();
+    </script>
+  </body>
+</html>

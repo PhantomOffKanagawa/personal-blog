@@ -1,0 +1,42 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+import { parseDurationToMinutes, formatHMS } from '../../utils/time';
+
+const all = await getCollection('tracking');
+const totals = all.reduce((acc, e) => {
+  acc.distanceKm += typeof e.data.distanceKm === 'number' ? e.data.distanceKm : 0;
+  const d = parseDurationToMinutes(e.data.durationMin);
+  acc.durationMin += d ?? 0;
+  acc.calories += e.data.calories ?? 0;
+  return acc;
+}, { distanceKm: 0, durationMin: 0, calories: 0 });
+---
+<html lang="en">
+  <head>
+    <BaseHead title="Tracking Stats" description="Cumulative stats across tracking entries." />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>Aggregated stats</h1>
+      <div class="grid md:grid-cols-3 gap-3 mt-4">
+        <div class="surface p-4 rounded-xl">
+          <div class="text-sm text-[var(--muted)]">Distance</div>
+          <div class="text-3xl">{totals.distanceKm.toFixed(1)} km</div>
+        </div>
+        <div class="surface p-4 rounded-xl">
+          <div class="text-sm text-[var(--muted)]">Duration</div>
+          <div class="text-3xl">{formatHMS(totals.durationMin)}</div>
+        </div>
+        <div class="surface p-4 rounded-xl">
+          <div class="text-sm text-[var(--muted)]">Calories</div>
+          <div class="text-3xl">{Math.round(totals.calories)}</div>
+        </div>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,74 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+const blog = await getCollection('blog');
+const reviews = await getCollection('reviews');
+const items = [
+  ...blog.map(b => ({ url: `/blog/${b.id}/`, title: b.data.title, type: 'blog', tags: (b.data as any).tags ?? [] })),
+  ...reviews.map(r => ({ url: `/reviews/${r.id}/`, title: r.data.productName, type: 'review', tags: r.data.tags ?? [] })),
+];
+---
+<html lang="en">
+  <head>
+    <BaseHead title="Library" description="Browse everything at once." />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="flex items-center justify-between">
+        <h1>Library</h1>
+        <div class="flex items-center gap-2">
+          <button id="listView" class="px-2 py-1 rounded-md border border-[var(--border)]">List</button>
+          <button id="iconView" class="px-2 py-1 rounded-md border border-[var(--border)]">Icons</button>
+        </div>
+      </div>
+      <div class="mt-3 flex gap-2 text-sm text-[var(--muted)]">
+        <label class="flex items-center gap-1"><input type="checkbox" value="blog" checked /> Blog</label>
+        <label class="flex items-center gap-1"><input type="checkbox" value="review" checked /> Reviews</label>
+      </div>
+      <section class="mt-4" id="container"></section>
+    </main>
+    <Footer />
+    <script type="module">
+      const data = JSON.parse(document.getElementById('lib-data')?.textContent || '[]');
+      const cont = document.getElementById('container');
+  const cbs = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+      const listBtn = document.getElementById('listView');
+      const iconBtn = document.getElementById('iconView');
+      const prefKey = 'lib-view';
+      let view = localStorage.getItem(prefKey) || 'list';
+      function render() {
+        const active = new Set(cbs.filter(c=>c.checked).map(c=>c.value));
+  const filtered = data.filter((d) => active.has(d.type));
+        cont.innerHTML = '';
+        if (view === 'list') {
+          const ul = document.createElement('ul'); ul.className = 'space-y-2';
+          filtered.forEach((d) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="${d.url}" class="block surface p-3 rounded-md card-hover">${d.title}<span class="ml-2 text-[var(--muted)]">• ${d.type}</span></a>`;
+            ul.appendChild(li);
+          });
+          cont.appendChild(ul);
+        } else {
+          const grid = document.createElement('div'); grid.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3';
+          filtered.forEach((d) => {
+            const a = document.createElement('a'); a.href = d.url; a.className = 'block surface p-4 rounded-md h-24 card-hover';
+            a.innerHTML = `<div class="text-sm uppercase text-[var(--muted)]">${d.type}</div><div class="mt-1 line-clamp-2">${d.title}</div>`;
+            grid.appendChild(a);
+          });
+          cont.appendChild(grid);
+        }
+        listBtn?.classList.toggle('bg-[var(--bg-elev-2)]', view==='list');
+        iconBtn?.classList.toggle('bg-[var(--bg-elev-2)]', view==='icons');
+      }
+      listBtn?.addEventListener('click', ()=>{ view='list'; localStorage.setItem(prefKey, view); render(); });
+      iconBtn?.addEventListener('click', ()=>{ view='icons'; localStorage.setItem(prefKey, view); render(); });
+      cbs.forEach(c=> c.addEventListener('change', render));
+      render();
+    </script>
+  <script type="application/json" id="lib-data" set:html={JSON.stringify(items)}></script>
+  </body>
+ </html>

@@ -3,42 +3,29 @@ import { NAME, EXTERNAL_LINKS } from '../consts';
 const today = new Date();
 import { Icon } from 'astro-icon/components'
 ---
-
-<footer>
-	&copy; {today.getFullYear()} {NAME}. All rights reserved.
-	<div class="social-links">
-		<a href={EXTERNAL_LINKS.GITHUB} target="_blank">
-			<span class="sr-only">Go to My Github</span>
-			<Icon name="mdi:github" height="32" width="32" />
-		</a>
-		<a href={EXTERNAL_LINKS.LINKED_IN} target="_blank">
-			<span class="sr-only">Go to My LinkedIn</span>
-			<Icon name="mdi:linkedin" height="32" width="32" />
-		</a>
-		<a href={EXTERNAL_LINKS.PORTFOLIO} target="_blank">
-			<span class="sr-only">Go to My Portfolio</span>
-			<Icon name="mdi:web" height="32" width="32" />
-		</a>
+<footer class="site-footer">
+	<div class="max-w-[1200px] mx-auto px-4 py-10 text-center">
+		<div class="flex justify-center items-center gap-2 text-[var(--muted)]">
+			<span>© {today.getFullYear()} {NAME}. All rights reserved.</span>
+		</div>
+		<div class="social-links">
+			<a href={EXTERNAL_LINKS.GITHUB} target="_blank" rel="noopener">
+				<span class="sr-only">Go to My Github</span>
+				<Icon name="mdi:github" height="24" width="24" />
+			</a>
+			<a href={EXTERNAL_LINKS.LINKED_IN} target="_blank" rel="noopener">
+				<span class="sr-only">Go to My LinkedIn</span>
+				<Icon name="mdi:linkedin" height="24" width="24" />
+			</a>
+			<a href={EXTERNAL_LINKS.PORTFOLIO} target="_blank" rel="noopener">
+				<span class="sr-only">Go to My Portfolio</span>
+				<Icon name="mdi:web" height="24" width="24" />
+			</a>
+		</div>
 	</div>
 </footer>
 <style>
-	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
-		text-align: center;
-	}
-	.social-links {
-		display: flex;
-		justify-content: center;
-		gap: 1em;
-		margin-top: 1em;
-	}
-	.social-links a {
-		text-decoration: none;
-		color: rgb(var(--gray));
-	}
-	.social-links a:hover {
-		color: rgb(var(--gray-dark));
-	}
+	.social-links { display: flex; justify-content: center; gap: .75rem; margin-top: .75rem; }
+	.social-links a { color: var(--muted); text-decoration: none; }
+	.social-links a:hover { color: var(--accent); }
 </style>

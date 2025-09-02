@@ -1,0 +1,21 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+<html lang="en">
+  <head>
+    <BaseHead title="Not Found" description="The page you were looking for vanished into the night." />
+  </head>
+  <body>
+    <Header />
+    <main class="text-center">
+      <div class="surface p-10 rounded-xl">
+        <h1>404 — Page not found</h1>
+        <p class="text-[var(--muted)]">Perhaps it slipped through a secret passage. Try the homepage.</p>
+        <p><a href="/" class="inline-block mt-4">Go home</a></p>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

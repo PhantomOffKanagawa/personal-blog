@@ -1,0 +1,25 @@
+---
+export interface Props { placeholder?: string; action?: string; value?: string }
+const { placeholder = 'Search…', action = '/search', value = '' } = Astro.props as Props;
+---
+<form action={action} method="get" class="relative w-full max-w-md">
+  <input name="q" type="search" value={value} placeholder={placeholder} class="w-full rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-10 py-2 text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+  </span>
+  <button type="reset" class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)]" aria-label="Clear" title="Clear">×</button>
+  <script>
+    const form = document.currentScript?.parentElement as HTMLElement | null;
+    if (form) {
+      const inputEl = form.querySelector('input[name="q"]');
+      const input = inputEl instanceof HTMLInputElement ? inputEl : null;
+      const reset = form.querySelector('button[type="reset"]');
+      reset?.addEventListener('click', () => { if (input) { input.value=''; input.focus(); } });
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault(); if (input) { input.focus(); input.select(); }
+        }
+      });
+    }
+  </script>
+</form>

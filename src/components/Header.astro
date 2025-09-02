@@ -2,60 +2,33 @@
 import { SITE_TITLE, INTERNAL_LINKS } from '../consts';
 import HeaderLink from './HeaderLink.astro';
 import { Icon } from 'astro-icon/components';
+import SearchInput from './SearchInput.astro';
+import ThemeToggle from './ThemeToggle.astro';
 ---
 
-<header>
-	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
-		<div class="internal-links">
+<header class="site-header">
+	<nav class="max-w-[1200px] mx-auto flex items-center gap-3 px-3 py-3">
+		<a href={INTERNAL_LINKS.HOME} class="flex items-center gap-2 text-[var(--text)] no-underline">
+			<Icon name="line-md:cloud-alt-braces-loop" width="24" height="24" class="icon" />
+			<strong>{SITE_TITLE}</strong>
+		</a>
+		<div class="flex-1"></div>
+		<div class="hidden md:flex items-center">
 			<HeaderLink href="/">Home</HeaderLink>
 			<HeaderLink href="/blog">Blog</HeaderLink>
 			<HeaderLink href="/reviews">Reviews</HeaderLink>
+			<HeaderLink href="/library">Library</HeaderLink>
+			<HeaderLink href="/tracking">Tracking</HeaderLink>
 		</div>
-		<a href={INTERNAL_LINKS.ABOUT}>
-			<span class="sr-only">Go to About Me</span>
-			<Icon name="mdi:account" height="32" width="32" />
+		<!-- <div class="hidden md:block w-[320px]">
+			<SearchInput placeholder="Search (Ctrl+K)" />
+		</div> -->
+		<!-- <ThemeToggle /> -->
+		<a href={INTERNAL_LINKS.ABOUT} class="ml-1 text-[var(--muted)] hover:text-[var(--text)]" title="About" aria-label="About">
+			<Icon name="mdi:account" height="24" width="24" />
 		</a>
 	</nav>
 </header>
 <style>
-	header {
-		margin: 0;
-		padding: 0 1em;
-		background: white;
-		box-shadow: 0 2px 8px rgba(var(--black), 5%);
-	}
-	h2 {
-		margin: 0;
-		font-size: 1em;
-	}
-
-	h2 a,
-	h2 a.active {
-		text-decoration: none;
-	}
-	nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	nav a {
-		padding: 1em 0.5em;
-		color: var(--black);
-		border-bottom: 4px solid transparent;
-		text-decoration: none;
-	}
-	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--accent);
-	}
-	.social-links,
-	.social-links a {
-		display: flex;
-	}
-	@media (max-width: 720px) {
-		.social-links {
-			display: none;
-		}
-	}
+	a { text-decoration: none; }
 </style>

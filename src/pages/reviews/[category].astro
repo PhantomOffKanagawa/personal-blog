@@ -1,0 +1,288 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+export function getStaticPaths() {
+  return [
+    { params: { category: 'gf-food' } },
+    { params: { category: 'df-food' } },
+    { params: { category: 'gadgets' } },
+    { params: { category: 'all' } },
+  ];
+}
+type CatKey = 'gf-food'|'df-food'|'gadgets';
+const category = (Astro.params.category || 'all') as CatKey | 'all';
+const all = await getCollection('reviews');
+const map: Record<CatKey, (r:any)=> boolean> = {
+  'gf-food': (r:any) => r.data.tags?.some((t:string)=> /\bgf\b|gluten[- ]?free/i.test(t)),
+  'df-food': (r:any) => r.data.tags?.some((t:string)=> /\bdf\b|dairy[- ]?free/i.test(t)),
+  'gadgets': (r:any) => r.data.tags?.some((t:string)=> /gadget|tech|device|hardware/i.test(t)),
+};
+const filter = (category !== 'all') ? map[category as CatKey] : (()=>true);
+const items = all.filter(filter).sort((a,b)=> b.data.createdDate.valueOf() - a.data.createdDate.valueOf());
+const title = (category==='gf-food' && 'Gluten-free Food') || (category==='df-food' && 'Dairy-free Food') || (category==='gadgets' && 'Gadgets') || 'All Reviews';
+const brands = Array.from(new Set(items.map((i:any)=> i.data.brand).filter(Boolean))).sort();
+const stores = Array.from(new Set(items.flatMap((i:any)=> (i.data.stores ?? []) as string[]))).sort();
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={`Reviews: ${title}`} description={`Browse ${title.toLowerCase()}.`} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>{title}</h1>
+      <section class="mt-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elev-1)]">
+        <div class="grid gap-2 md:grid-cols-[1fr,auto,auto,auto,auto,auto] items-center">
+          <input id="q" class="w-full rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-3 py-2" placeholder={`Search ${title}`} />
+          <select id="sort" class="rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-2 py-2">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="rating-desc">Rating: High → Low</option>
+            <option value="rating-asc">Rating: Low → High</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+            <option value="name-asc">Name: A → Z</option>
+          </select>
+          <select id="brand" class="rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-2 py-2">
+            <option value="">All brands</option>
+            {brands.map((b:any)=> (<option value={b}>{b}</option>))}
+          </select>
+          <select id="store" class="rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-2 py-2">
+            <option value="">All stores</option>
+            {stores.map((s:any)=> (<option value={s}>{s}</option>))}
+          </select>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-[var(--muted)]" for="rating-min">Min ★</label>
+            <input id="rating-min" type="number" min="0" max="5" step="0.5" class="w-20 rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-2 py-2" />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-[var(--muted)]" for="price-max">Max $</label>
+            <input id="price-max" type="number" min="0" step="0.01" class="w-24 rounded-md bg-[var(--bg-elev-2)] border border-[var(--border)] px-2 py-2" />
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-2 justify-between">
+          <div id="count" class="text-sm text-[var(--muted)]"></div>
+          <div class="flex items-center gap-2">
+            <button id="view-cards" class="px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-elev-2)]" aria-pressed="false">Cards</button>
+            <button id="view-table" class="px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-elev-2)]" aria-pressed="false">Table</button>
+            <button id="reset" class="px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-elev-2)]">Reset</button>
+          </div>
+        </div>
+      </section>
+      <div id="results" class="mt-4">
+        <ul class="space-y-2">
+          {items.map(i => (
+            <li>
+              <a class="block surface p-3 rounded-md card-hover" href={`/reviews/${i.id}/`}>
+                <div class="text-lg">{i.data.productName}</div>
+                <div class="text-[var(--muted)]">{i.data.brand}</div>
+                {i.data.stores?.length && <div class="text-[var(--muted)]">{i.data.stores.join(', ')}</div>}
+                <div class="text-[var(--muted)]">
+                  {i.data.price && `$${i.data.price.toFixed(2)}`}
+                  {i.data.price && (i.data.rating ?? i.data.ratingOverall) && ` · `}
+                  {(typeof (i.data.rating ?? i.data.ratingOverall) === 'number') && `★${((i.data.rating ?? i.data.ratingOverall) ?? 0).toFixed(1)}`}
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <noscript>
+        <ul class="mt-4 space-y-2">
+          {items.map(i => (
+            <li>
+              <a class="block surface p-3 rounded-md card-hover" href={`/reviews/${i.id}/`}>
+                <div class="text-lg">{i.data.productName}</div>
+                <div class="text-[var(--muted)]">{i.data.brand}</div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </noscript>
+    </main>
+    <Footer />
+    <script type="module" define:vars={{ initialData: items.map(i => ({ id: i.id, productName: i.data.productName, brand: i.data.brand, tags: i.data.tags ?? [], rating: (i.data.rating ?? i.data.ratingOverall), price: i.data.price, stores: i.data.stores ?? [], createdDate: Number(new Date(i.data.createdDate)) })) }}>
+      (async () => {
+        let FuseMod; let fuse;
+        const raw = initialData;
+        const q = document.getElementById('q');
+        const sortSel = document.getElementById('sort');
+        const brandSel = document.getElementById('brand');
+        const storeSel = document.getElementById('store');
+        const ratingMin = document.getElementById('rating-min');
+        const priceMax = document.getElementById('price-max');
+        const results = document.getElementById('results');
+        const count = document.getElementById('count');
+        const viewCardsBtn = document.getElementById('view-cards');
+        const viewTableBtn = document.getElementById('view-table');
+        const resetBtn = document.getElementById('reset');
+
+        function formatPrice(n) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n); }
+        function star(n) { return '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n)); }
+        function currentView() { return localStorage.getItem('reviews:view') || 'cards'; }
+        function currentSort() {
+          const urlSort = new URL(location.href).searchParams.get('sort');
+          return urlSort || localStorage.getItem('reviews:sort') || 'newest';
+        }
+
+        function setSort(val) {
+          // Persist in LS
+          localStorage.setItem('reviews:sort', val);
+          // Reflect in URL without reload
+          const u = new URL(location.href);
+          if (val && val !== 'newest') u.searchParams.set('sort', val); else u.searchParams.delete('sort');
+          history.replaceState({}, '', u);
+        }
+        function setView(v) {
+          localStorage.setItem('reviews:view', v);
+          viewCardsBtn?.classList.toggle('ring-2', v === 'cards');
+          viewTableBtn?.classList.toggle('ring-2', v === 'table');
+          viewCardsBtn?.setAttribute('aria-pressed', String(v === 'cards'));
+          viewTableBtn?.setAttribute('aria-pressed', String(v === 'table'));
+        }
+
+        function naiveFilter(arr, s) {
+          const ql = s.toLowerCase();
+          return arr.filter(i => String(i.productName || '').toLowerCase().includes(ql)
+            || String(i.brand || '').toLowerCase().includes(ql)
+            || (i.tags || []).join(',').toLowerCase().includes(ql)
+            || (i.stores || []).join(',').toLowerCase().includes(ql));
+        }
+
+        function applyFilters(arr) {
+          let out = arr.slice();
+          const s = (q && 'value' in q ? q.value.trim() : '');
+          if (s) out = fuse ? fuse.search(s).map(r => r.item) : naiveFilter(out, s);
+          const brand = (brandSel && 'value' in brandSel) ? brandSel.value : '';
+          if (brand) out = out.filter(i => i.brand === brand);
+          const store = (storeSel && 'value' in storeSel) ? storeSel.value : '';
+          if (store) out = out.filter(i => (i.stores || []).includes(store));
+          const rmin = (ratingMin && ratingMin.value) ? parseFloat(ratingMin.value) : NaN;
+          if (!Number.isNaN(rmin)) out = out.filter(i => typeof i.rating === 'number' && i.rating >= rmin);
+          const pmax = (priceMax && priceMax.value) ? parseFloat(priceMax.value) : NaN;
+          if (!Number.isNaN(pmax)) out = out.filter(i => typeof i.price === 'number' && i.price <= pmax);
+          const sortVal = (sortSel && 'value' in sortSel) ? sortSel.value : currentSort();
+          setSort(sortVal);
+          out.sort((a, b) => {
+            switch (sortVal) {
+        case 'oldest': return (a.createdDate || 0) - (b.createdDate || 0);
+        case 'rating-desc': return ((b.rating ?? b.ratingOverall ?? 0) - (a.rating ?? a.ratingOverall ?? 0));
+        case 'rating-asc': return ((a.rating ?? a.ratingOverall ?? 0) - (b.rating ?? b.ratingOverall ?? 0));
+              case 'price-asc': return (a.price ?? Infinity) - (b.price ?? Infinity);
+              case 'price-desc': return (b.price ?? -Infinity) - (a.price ?? -Infinity);
+              case 'name-asc': return String(a.productName).localeCompare(String(b.productName));
+        default: return (b.createdDate || 0) - (a.createdDate || 0);
+            }
+          });
+          return out;
+        }
+
+        function renderCards(arr) {
+          const ul = document.createElement('ul'); ul.className = 'space-y-2';
+          arr.forEach(i => {
+            const li = document.createElement('li');
+            const a = document.createElement('a'); a.className = 'block surface p-3 rounded-md card-hover'; a.href = `/reviews/${i.id}/`;
+            const nm = document.createElement('div'); nm.className = 'text-lg'; nm.textContent = i.productName || '';
+            const br = document.createElement('div'); br.className = 'text-[var(--muted)]'; br.textContent = i.brand || '';
+            const st = document.createElement('div'); st.className = 'text-[var(--muted)]'; if (i.stores?.length) st.textContent = i.stores.join(', ');
+            const meta = document.createElement('div'); meta.className = 'text-[var(--muted)]';
+            const priceStr = typeof i.price === 'number' ? formatPrice(i.price) : '';
+            const ratingStr = typeof i.rating === 'number' ? ` · ${star(i.rating)}` : '';
+            meta.textContent = `${priceStr}${ratingStr}`;
+            a.append(nm, br); if (st.textContent) a.appendChild(st); a.appendChild(meta);
+            li.appendChild(a); ul.appendChild(li);
+          });
+          return ul;
+        }
+
+        function renderTable(arr) {
+          const table = document.createElement('table'); table.className = 'w-full text-left border-collapse';
+          const thead = document.createElement('thead'); const trh = document.createElement('tr');
+          ['Product', 'Brand', 'Stores', 'Price', 'Rating', 'Date', 'Link'].forEach(h => { const th = document.createElement('th'); th.className = 'border-b border-[var(--border)] py-2'; th.textContent = h; trh.appendChild(th); });
+          thead.appendChild(trh); table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          arr.forEach(i => {
+            const tr = document.createElement('tr');
+            const td = (t) => { const x = document.createElement('td'); x.className = 'py-2 pr-3'; x.textContent = t; return x; };
+            tr.append(
+              td(String(i.productName || '')),
+              td(String(i.brand || '')),
+              td((i.stores || []).join(', ')),
+              td(typeof i.price === 'number' ? formatPrice(i.price) : ''),
+              td(typeof i.rating === 'number' ? `${i.rating} (${star(i.rating)})` : ''),
+              td(i.createdDate ? new Date(i.createdDate).toLocaleDateString() : ''),
+            );
+            const linkTd = document.createElement('td'); linkTd.className = 'py-2';
+            const link = document.createElement('a'); link.href = `/reviews/${i.id}/`; link.textContent = 'Open'; link.className = 'underline hover:text-[var(--accent)]';
+            linkTd.appendChild(link); tr.appendChild(linkTd);
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody); return table;
+        }
+
+        const SORT_LABELS = {
+          'newest': 'Newest', 'oldest': 'Oldest', 'rating-desc': 'Rating: High → Low', 'rating-asc': 'Rating: Low → High', 'price-asc': 'Price: Low → High', 'price-desc': 'Price: High → Low', 'name-asc': 'Name: A → Z'
+        };
+
+        function render() {
+          if (!results) return;
+          const arr = applyFilters(raw);
+          const sv = (sortSel && 'value' in sortSel) ? sortSel.value : currentSort();
+          if (count) count.textContent = `${arr.length} result${arr.length === 1 ? '' : 's'} — Sorted by ${SORT_LABELS[sv] || sv}`;
+          results.innerHTML = '';
+          const view = currentView();
+          const node = (view === 'table') ? renderTable(arr) : renderCards(arr);
+          results.appendChild(node);
+        }
+
+        function wire() {
+          setView(currentView());
+          if (sortSel) sortSel.value = currentSort();
+          q?.addEventListener('input', debounce(render, 120));
+          sortSel?.addEventListener('change', () => { setSort(sortSel.value); render(); });
+          brandSel?.addEventListener('change', render);
+          storeSel?.addEventListener('change', render);
+          ratingMin?.addEventListener('input', debounce(render, 120));
+          priceMax?.addEventListener('input', debounce(render, 120));
+          viewCardsBtn?.addEventListener('click', () => { setView('cards'); render(); });
+          viewTableBtn?.addEventListener('click', () => { setView('table'); render(); });
+          resetBtn?.addEventListener('click', () => {
+            if (q) q.value = ''; if (sortSel) sortSel.value = 'newest'; if (brandSel) brandSel.value = ''; if (storeSel) storeSel.value = ''; if (ratingMin) ratingMin.value = ''; if (priceMax) priceMax.value = '';
+            setSort('newest');
+            render();
+          });
+        }
+
+        function debounce(fn, ms) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(null, args), ms); }; }
+
+        // If all dates are equal and user hasn't chosen a sort, pick a more useful default
+        const allDates = raw.map(i => i.createdDate).filter(Boolean);
+        const datesEqual = allDates.length > 1 && allDates.every(d => d === allDates[0]);
+        const hasExplicitSort = Boolean(new URL(location.href).searchParams.get('sort') || localStorage.getItem('reviews:sort'));
+        if (datesEqual && !hasExplicitSort) {
+          setSort('rating-desc');
+        }
+
+        // Initial UI render immediately (don't block on Fuse)
+        wire();
+        if (sortSel) sortSel.value = currentSort();
+        render();
+
+        // Load Fuse in the background to enhance search; re-render if query present
+        try {
+          ({ default: FuseMod } = await import('fuse.js'));
+        } catch {
+          try { ({ default: FuseMod } = await import('https://cdn.skypack.dev/fuse.js@6.6.2')); } catch { FuseMod = undefined; }
+        }
+        if (FuseMod) {
+          fuse = new FuseMod(raw, { keys: ['productName', 'brand', 'tags', 'stores'], threshold: .35, ignoreLocation: true });
+          if (q && 'value' in q && q.value.trim()) render();
+        }
+      })();
+  </script>
+  </body>
+</html>

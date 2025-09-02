@@ -7,6 +7,7 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
 import icon from 'astro-icon';
+import remarkIconify from './src/remark/remark-iconify.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,5 +16,8 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
+  },
+  markdown: {
+    remarkPlugins: [remarkIconify],
   },
 });
