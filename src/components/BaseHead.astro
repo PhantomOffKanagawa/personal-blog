@@ -17,7 +17,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const { title, description, image = FallbackImage } = Astro.props;
 ---
 
-<base href="https://phantomoffkanagawa.github.io/personal-blog/" />
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
@@ -45,6 +44,23 @@ const { title, description, image = FallbackImage } = Astro.props;
 			if (prefersLight) document.documentElement.setAttribute('data-theme', 'light');
 		} catch {}
 	})();
+
+	document.addEventListener('DOMContentLoaded', () => {
+    // Get the current path from the browser's URL
+    const pathname = window.location.pathname;
+
+    // Split the path into segments and find your base path
+    // e.g., for /personal-blog/reviews/, this finds "personal-blog"
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const basePath = pathSegments.length > 0 ? `/${pathSegments[0]}/` : '/';
+
+    // Create a new <base> tag
+    const baseTag = document.createElement('base');
+    baseTag.href = `${window.location.protocol}//${window.location.host}${basePath}`;
+
+    // Add the <base> tag to the head of the document
+    document.head.prepend(baseTag);
+});
 	</script>
 
 <!-- Font preloads -->
