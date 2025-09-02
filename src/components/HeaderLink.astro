@@ -1,5 +1,7 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
+import { resolveUrl } from '../utils'; // Import the new helper function
+import { Astro } from 'astro/runtime/server/astro-integration';
 
 type Props = HTMLAttributes<'a'>;
 
@@ -7,13 +9,27 @@ const { href, class: className, ...props } = Astro.props;
 const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL, '');
 const subpath = pathname.match(/[^\/]+/g);
 const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
+
+// Resolve the href dynamically
+const resolvedHref = resolveUrl(href);
+
+function resolveUrl(path: string): string {
+    const siteUrl = Astro.url.origin;
+    const basePath = import.meta.env.BASE_URL;
+
+    if (path.startsWith(basePath)) {
+        return `${siteUrl}${path}`;
+    }
+
+    return `${siteUrl}${basePath}${path}`;
+}
 ---
 
-<a href={href} class:list={[className, { active: isActive }]} {...props}>
-	<slot />
+<a href={resolvedHref} class:list={[className, { active: isActive }]} {...props}>
+    <slot />
 </a>
 <style>
-	a { display: inline-block; padding: .5em .75em; color: var(--muted); border-bottom: 2px solid transparent; text-decoration: none; }
-	a:hover { color: var(--text); border-bottom-color: color-mix(in oklab, var(--accent) 35%, transparent); }
-	a.active { color: var(--text); border-bottom-color: var(--accent); }
+    a { display: inline-block; padding: .5em .75em; color: var(--muted); border-bottom: 2px solid transparent; text-decoration: none; }
+    a:hover { color: var(--text); border-bottom-color: color-mix(in oklab, var(--accent) 35%, transparent); }
+    a.active { color: var(--text); border-bottom-color: var(--accent); }
 </style>
