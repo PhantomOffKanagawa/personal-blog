@@ -2,6 +2,7 @@
 title: Iconify Test
 createdDate: 2025-09-01
 description: Test inline Iconify icons in Markdown without client JS
+heroImage: "@assets/hero/iconify-test.png"
 updatedDate: 2025-09-02T00:18
 ---
 
