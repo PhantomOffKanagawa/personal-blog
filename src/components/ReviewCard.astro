@@ -1,0 +1,21 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+
+interface Props {
+  review: CollectionEntry<'reviews'>;
+}
+
+const { review } = Astro.props;
+const { productName, brand, rating, productImage } = review.data;
+---
+<a href={`/reviews/${review.id}`} class="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:scale-105 transition-transform">
+    {review.data.productImage && (
+        <Image width={720} height={360} src={review.data.productImage} alt={productName} />
+    )}
+  <div class="p-4">
+    <h3 class="text-lg font-bold">{productName}</h3>
+    <p class="text-sm text-gray-400 mb-2">{brand}</p>
+    <p class="text-lg">{'★'.repeat(rating)}{'☆'.repeat(5 - rating)}</p>
+  </div>
+</a>

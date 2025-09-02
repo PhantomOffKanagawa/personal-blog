@@ -1,0 +1,36 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+	title: string;
+	description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={description} />
+		<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans:wght@400;500;700;900&family=Space+Grotesk:wght@400;500;700"
+		/>
+		<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	</head>
+	<body>
+		<div class="relative flex size-full min-h-screen flex-col bg-[#111816] overflow-x-hidden" style='font-family: "Space Grotesk", "Noto Sans", sans-serif;'>
+			<div class="layout-container flex h-full grow flex-col">
+				<Header />
+				<main class="flex-1">
+					<slot />
+				</main>
+				<Footer />
+			</div>
+		</div>
+	</body>
+</html>
