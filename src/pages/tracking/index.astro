@@ -20,7 +20,7 @@ const workouts = (await getCollection('tracking')).filter(t => t.data.type==='wo
         <section class="surface p-4 rounded-xl">
           <div class="flex items-center justify-between">
             <h2>Runs</h2>
-            <a href="/tracking/run/" class="text-sm">See all →</a>
+            <a href="/personal-blog/tracking/run/" class="text-sm">See all →</a>
           </div>
           <ul class="mt-2 space-y-2">
             {runs.map(r => (
@@ -31,7 +31,7 @@ const workouts = (await getCollection('tracking')).filter(t => t.data.type==='wo
         <section class="surface p-4 rounded-xl">
           <div class="flex items-center justify-between">
             <h2>Workouts</h2>
-            <a href="/tracking/workout" class="text-sm">See all →</a>
+            <a href="/personal-blog/tracking/workout" class="text-sm">See all →</a>
           </div>
           <ul class="mt-2 space-y-2">
             {workouts.map(w => (
@@ -41,7 +41,7 @@ const workouts = (await getCollection('tracking')).filter(t => t.data.type==='wo
         </section>
       </div>
       <div class="mt-6">
-        <a class="inline-block px-3 py-2 rounded-md border border-[var(--border)]" href="/tracking/stats">Aggregated stats</a>
+        <a class="inline-block px-3 py-2 rounded-md border border-[var(--border)]" href="/personal-blog/tracking/stats">Aggregated stats</a>
       </div>
     </main>
     <Footer />

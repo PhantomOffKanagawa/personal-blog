@@ -48,7 +48,7 @@ const items = [
           const ul = document.createElement('ul'); ul.className = 'space-y-2';
           filtered.forEach((d) => {
             const li = document.createElement('li');
-            li.innerHTML = `<a href="${d.url}" class="block surface p-3 rounded-md card-hover">${d.title}<span class="ml-2 text-[var(--muted)]">• ${d.type}</span></a>`;
+            li.innerHTML = `<a href="/personal-blog${d.url}" class="block surface p-3 rounded-md card-hover">${d.title}<span class="ml-2 text-[var(--muted)]">• ${d.type}</span></a>`;
             ul.appendChild(li);
           });
           cont.appendChild(ul);

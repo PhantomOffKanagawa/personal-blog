@@ -59,7 +59,7 @@ const titleMap: Record<Params['type'], string> = { run: 'Runs', workout: 'Workou
         list.innerHTML = '';
         arr.forEach((i) => {
           const li = document.createElement('li');
-          li.innerHTML = `<a class="block surface p-3 rounded-md card-hover" href="/tracking/${i.id}/">
+          li.innerHTML = `<a class="block surface p-3 rounded-md card-hover" href="/personal-blog/tracking/${i.id}/">
                             <div class=\"text-sm text-[var(--muted)]\">${new Date(i.date).toLocaleDateString()}</div>
                             <div>${i.type}${i.distanceKm?` — ${i.distanceKm} km`:''}${i.durationMin?` <span class='ml-2'>${typeof i.durationMin==='string' && i.durationMin.includes(':') ? i.durationMin : i.durationMin + ' min'}</span>`:''}</div>
                             ${i.notes?`<div class=\"text-[var(--muted)]\">${i.notes}</div>`:''}
